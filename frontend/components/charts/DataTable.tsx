@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { ColumnMeta } from '@/types';
 
 const PAGE_SIZE = 20;
@@ -15,6 +15,7 @@ export function DataTable({ columns, rows }: Props) {
     ? [...rows].sort((a, b) => {
         const av = a[sortKey] as string | number;
         const bv = b[sortKey] as string | number;
+        if (av === bv) return 0;
         return sortDir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
       })
     : rows;
@@ -40,7 +41,7 @@ export function DataTable({ columns, rows }: Props) {
                   className="px-4 py-3 text-left text-slate-400 font-medium cursor-pointer hover:text-white transition-colors whitespace-nowrap select-none"
                 >
                   {col.name.replace(/_/g, ' ')}
-                  {sortKey === col.name ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                  {sortKey === col.name ? (sortDir === 'asc' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '') : ''}
                 </th>
               ))}
             </tr>

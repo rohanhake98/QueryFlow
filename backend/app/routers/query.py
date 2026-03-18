@@ -123,18 +123,30 @@ async def ask_query(
             was_corrected = True
         except Exception as retry_error:
             execution_time_ms = int((time.time() - start_time) * 1000)
+            
+            # Advanced Error Analysis: Let the LLM explain why it's failing
+            error_explanation = await engine_svc.explain_query_failure(
+                payload.question, connection.schema_cache, str(retry_error)
+            )
+            
             history = QueryHistory(
                 user_id=current_user.id,
                 connection_id=connection.id,
                 question=payload.question,
                 generated_sql=generated_sql,
                 status="error",
-                error_message=str(retry_error),
+                error_message=f"{str(retry_error)} | Explanation: {error_explanation}",
                 execution_time_ms=execution_time_ms,
             )
             db.add(history)
             await db.commit()
-            raise HTTPException(status_code=400, detail=f"Query execution failed: {str(retry_error)}")
+            raise HTTPException(
+                status_code=400, 
+                detail={
+                    "error": str(retry_error),
+                    "explanation": error_explanation
+                }
+            )
 
     execution_time_ms = int((time.time() - start_time) * 1000)
     visualization = decide_chart_type(columns_meta, rows_data)

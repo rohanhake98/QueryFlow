@@ -99,3 +99,16 @@ Return ONLY the corrected SQL query with no explanation.
 """
         result = await self.llm.ainvoke(retry_prompt)
         return result.content.strip()
+    async def explain_query_failure(self, question: str, schema: dict, error_message: str) -> str:
+        """Explains to the user why their question might be resulting in SQL errors."""
+        from app.services.schema_introspector import format_schema_for_prompt
+        explain_prompt = f"""The user asked: "{question}"
+The database returned this error: {error_message}
+
+Based on the schema below, explain in plain English why this query might be failing or if the question is impossible to answer with the current data.
+{format_schema_for_prompt(schema)}
+
+Keep the explanation concise and helpful.
+"""
+        result = await self.llm.ainvoke(explain_prompt)
+        return result.content.strip()

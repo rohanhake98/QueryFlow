@@ -29,18 +29,39 @@ export function ResultsPanel({ result, visualization }: Props) {
     document.body.removeChild(link);
   };
 
+  const downloadJson = () => {
+    if (!result.rows.length) return;
+    const blob = new Blob([JSON.stringify(result.rows, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `query_results_${new Date().getTime()}.json`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="glass rounded-xl overflow-hidden animate-fade-in">
       <div className="px-4 py-3 border-b border-surface-border flex items-center justify-between">
         <span className="text-sm font-medium text-slate-300">
           {title || 'Query Results'} · {result.row_count} rows
         </span>
-        <button 
-          onClick={downloadCsv}
-          className="text-xs px-2 py-1 rounded bg-surface-hover hover:bg-surface-border text-slate-400 hover:text-white transition-all flex items-center gap-1.5"
-        >
-          📥 Download CSV
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={downloadCsv}
+            className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-surface-hover hover:bg-surface-border text-slate-400 hover:text-white transition-all"
+          >
+            CSV
+          </button>
+          <button 
+            onClick={downloadJson}
+            className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-surface-hover hover:bg-surface-border text-slate-400 hover:text-white transition-all"
+          >
+            JSON
+          </button>
+        </div>
       </div>
       <div className="p-4">
         {chart_type === 'kpi' && <KpiCard columns={result.columns} rows={result.rows} />}

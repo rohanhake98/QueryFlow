@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useConnections } from '@/hooks/useConnections';
 import { queryApi } from '@/lib/api';
 import type { QueryResponse, LoadingStep } from '@/types';
@@ -31,14 +31,16 @@ export default function DashboardPage() {
   const [question, setQuestion] = useState('');
   const [loadingStep, setLoadingStep] = useState<LoadingStep>('idle');
   const [queryResult, setQueryResult] = useState<QueryResponse | null>(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [aiExplanation, setAiExplanation] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isLoading = loadingStep !== 'idle' && loadingStep !== 'done';
 
   const handleAsk = async () => {
     if (!question.trim() || !selectedConn) return;
-    setError('');
+    setError(null);
+    setAiExplanation(null);
     setQueryResult(null);
     setLoadingStep('generating');
 
@@ -54,9 +56,13 @@ export default function DashboardPage() {
       await new Promise((r) => setTimeout(r, 200));
       setQueryResult(data);
       setLoadingStep('done');
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      setError(msg || 'Query failed. Please try again.');
+    } catch (err: any) {
+      const errorData = err.response?.data?.detail;
+      const errorMessage = typeof errorData === 'object' ? errorData.error : errorData;
+      const explanation = typeof errorData === 'object' ? errorData.explanation : null;
+      
+      setError(errorMessage || 'Query failed. Please try again.');
+      setAiExplanation(explanation);
       setLoadingStep('idle');
     }
   };
@@ -151,7 +157,15 @@ export default function DashboardPage() {
       {/* Error */}
       {error && (
         <div className="glass rounded-xl px-5 py-4 border border-red-500/30 bg-red-500/5 text-red-400 text-sm mb-4 animate-fade-in">
-          ❌ {error}
+          <div className="flex items-center gap-2 mb-2 font-medium">
+            <span>❌ {error}</span>
+          </div>
+          {aiExplanation && (
+            <div className="mt-3 p-3 bg-brand-500/10 border border-brand-500/20 rounded-lg text-slate-200">
+              <p className="text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-1">AI Insight</p>
+              <p className="italic leading-relaxed">"{aiExplanation}"</p>
+            </div>
+          )}
         </div>
       )}
 

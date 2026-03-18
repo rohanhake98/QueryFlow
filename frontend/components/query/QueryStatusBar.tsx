@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 interface Step { key: LoadingStep; label: string; }
 
 export function QueryStatusBar({ currentStep, steps }: { currentStep: LoadingStep; steps: Step[] }) {
-  const currentIdx = steps.findIndex((s) => s.key === currentStep);
+  const currentIdx = currentStep === 'done' ? steps.length : steps.findIndex((s) => s.key === currentStep);
 
   return (
     <div className="glass rounded-xl p-5 mb-4 animate-fade-in">

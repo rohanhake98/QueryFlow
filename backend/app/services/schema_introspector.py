@@ -78,7 +78,7 @@ def test_and_introspect(db_type: str, host: str, port: int, database_name: str, 
         raise ConnectionError(str(e))
 
     # Build schema dict
-    tables: dict[str, dict] = {}
+    schema_data: dict[str, dict] = {}
     for row in rows:
         tname = row[0]
         col_name = row[1]
@@ -86,27 +86,42 @@ def test_and_introspect(db_type: str, host: str, port: int, database_name: str, 
         ref_table = row[6] if len(row) > 6 else None
         ref_column = row[7] if len(row) > 7 else None
 
-        if tname not in tables:
-            tables[tname] = {"name": tname, "columns": [], "foreign_keys": []}
+        if tname not in schema_data:
+            schema_data[tname] = {"name": tname, "columns": [], "foreign_keys": [], "sample_rows": []}
 
         # Add column if not already added
-        existing_cols = [c["name"] for c in tables[tname]["columns"]]
+        existing_cols = [c["name"] for c in schema_data[tname]["columns"]]
         if col_name not in existing_cols:
-            tables[tname]["columns"].append({"name": col_name, "type": col_type})
+            schema_data[tname]["columns"].append({"name": col_name, "type": col_type})
 
         # Add FK
         if ref_table and ref_column:
             fk = {"column": col_name, "ref_table": ref_table, "ref_column": ref_column}
-            if fk not in tables[tname]["foreign_keys"]:
-                tables[tname]["foreign_keys"].append(fk)
+            if fk not in schema_data[tname]["foreign_keys"]:
+                schema_data[tname]["foreign_keys"].append(fk)
 
-    return {"tables": list(tables.values())}
+    # Fetch sample rows for each table
+    try:
+        engine = create_engine(url)
+        with engine.connect() as conn:
+            for tname in schema_data:
+                try:
+                    # Limit to 1 row for tokens efficiency
+                    sample = conn.execute(text(f"SELECT * FROM {tname} LIMIT 1")).fetchone()
+                    if sample:
+                        schema_data[tname]["sample_rows"] = [dict(zip(sample._fields, sample))]
+                except Exception:
+                    continue  # Skip if table empty or error
+    except Exception:
+        pass
+
+    return {"tables": list(schema_data.values())}
 
 
 def format_schema_for_prompt(schema_json: dict) -> str:
     """
     Converts stored schema JSON into a compact, LLM-readable string.
-    Minimizes token usage while preserving all necessary information.
+    Includes table names, columns, foreign keys, and sample rows.
     """
     lines = []
     for table in schema_json.get("tables", []):
@@ -119,5 +134,8 @@ def format_schema_for_prompt(schema_json: dict) -> str:
         if table.get("foreign_keys"):
             for fk in table["foreign_keys"]:
                 lines.append(f"  → FK: {table['name']}.{fk['column']} → {fk['ref_table']}.{fk['ref_column']}")
+
+        if table.get("sample_rows"):
+            lines.append(f"  → Sample: {str(table['sample_rows'][0])}")
 
     return "\n".join(lines)
