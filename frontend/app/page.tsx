@@ -9,7 +9,7 @@ const FEATURES = [
   {
     icon: '💬',
     title: 'Ask in Plain English',
-    desc: 'Type your question naturally. QueryFlow generates valid, safe SQL using GPT-4o.',
+    desc: 'Type your question naturally. QueryFlow generates valid, safe SQL using Gemini 2.0 Flash.',
   },
   {
     icon: '📊',
@@ -77,7 +77,7 @@ export default function LandingPage() {
         <div className="relative max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-300 text-sm font-medium mb-6">
             <span className="status-dot success" />
-            Powered by GPT-4o & LangChain
+            Powered by Gemini 2.0 Flash & LangChain
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold mb-6 leading-tight">
@@ -195,7 +195,7 @@ export default function LandingPage() {
           <span>⚡</span>
           <span className="font-semibold gradient-text">QueryFlow</span>
         </div>
-        <p>Natural Language to SQL · Built with FastAPI, LangChain, Next.js, and love.</p>
+        <p>Natural Language to SQL · Built with FastAPI, LangChain, Next.js, and Gemini.</p>
       </footer>
     </main>
   );

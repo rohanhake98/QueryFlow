@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     # LLM APIs
     OPENAI_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
-    DEFAULT_LLM_PROVIDER: str = "openai"  # openai | gemini
+    DEFAULT_LLM_PROVIDER: str = "gemini"  # gemini | openai
 
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 30

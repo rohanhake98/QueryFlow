@@ -1,4 +1,5 @@
 'use client';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
@@ -6,15 +7,15 @@ import { authApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Query', icon: '💬' },
+  { href: '/dashboard', label: 'Query',       icon: '💬' },
   { href: '/connections', label: 'Connections', icon: '🔗' },
-  { href: '/history', label: 'History', icon: '📜' },
-  { href: '/settings', label: 'Settings', icon: '⚙️' },
+  { href: '/history',     label: 'History',     icon: '📜' },
+  { href: '/settings',    label: 'Settings',    icon: '⚙️' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
+  const router   = useRouter();
   const { user, logout } = useAuthStore();
 
   const handleLogout = async () => {
@@ -24,21 +25,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="min-h-screen bg-surface flex">
-      {/* Sidebar */}
-      <aside className="w-64 glass border-r border-surface-border flex flex-col fixed top-0 left-0 h-full z-40">
+    <div className="dashboard-layout">
+      {/* ── Sidebar ─────────────────────────────── */}
+      <aside className="sidebar">
         {/* Logo */}
-        <div className="p-6 border-b border-surface-border">
-          <Link href="/dashboard" className="flex items-center gap-2">
+        <div className="p-6 border-b border-surface-border flex-shrink-0">
+          <Link href="/dashboard" className="flex items-center gap-2 group">
             <span className="text-2xl">⚡</span>
             <span className="text-xl font-bold gradient-text">QueryFlow</span>
           </Link>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {NAV_ITEMS.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(item.href + '/');
+            const active =
+              pathname === item.href || pathname.startsWith(item.href + '/');
             return (
               <Link
                 key={item.href}
@@ -50,22 +52,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     : 'text-slate-400 hover:text-white hover:bg-surface-hover'
                 )}
               >
-                <span className="text-lg">{item.icon}</span>
-                {item.label}
-                {active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400" />}
+                <span className="text-lg leading-none">{item.icon}</span>
+                <span>{item.label}</span>
+                {active && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
+                )}
               </Link>
             );
           })}
         </nav>
 
         {/* User section */}
-        <div className="p-4 border-t border-surface-border">
+        <div className="p-4 border-t border-surface-border flex-shrink-0">
           <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-surface-hover mb-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm">
-              {user?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'}
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              {user?.full_name?.[0]?.toUpperCase() ||
+               user?.email?.[0]?.toUpperCase()     ||
+               '?'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{user?.full_name || 'User'}</p>
+              <p className="text-sm font-medium text-white truncate">
+                {user?.full_name || 'User'}
+              </p>
               <p className="text-xs text-slate-500 truncate">{user?.email}</p>
             </div>
           </div>
@@ -79,8 +87,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 ml-64 min-h-screen">
+      {/* ── Main content ─────────────────────────── */}
+      <main className="main-content">
         {children}
       </main>
     </div>
