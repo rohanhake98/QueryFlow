@@ -1,11 +1,11 @@
 'use client';
-import { useState } from 'react';
-import Editor from '@monaco-editor/react';
 import { historyApi } from '@/lib/api';
+import Editor from '@monaco-editor/react';
+import { useState } from 'react';
 
-interface Props { sql: string; queryId: string; }
+interface Props { sql: string; query_id: string; }
 
-export default function SqlPreviewPanel({ sql, queryId }: Props) {
+export default function SqlPreviewPanel({ sql, query_id }: Props) {
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveName, setSaveName] = useState('');
@@ -21,7 +21,7 @@ export default function SqlPreviewPanel({ sql, queryId }: Props) {
     if (!saveName.trim()) return;
     setSaving(true);
     try {
-      await historyApi.save(queryId, saveName.trim());
+      await historyApi.save(query_id, saveName.trim());
       setShowSave(false);
       setSaveName('');
     } finally {

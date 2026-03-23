@@ -1,16 +1,20 @@
 'use client';
-import React, { useMemo, useState } from 'react';
 import type { ColumnMeta } from '@/types';
+import { useMemo, useState } from 'react';
 
 const PAGE_SIZE = 20;
 
 interface Props {
   columns: ColumnMeta[];
   rows: Record<string, unknown>[];
+  total?: number;
+  limit?: number;
+  offset?: number;
+  onPageChange?: (offset: number) => void;
+  isLoading?: boolean;
 }
 
-export function DataTable({ columns, rows }: Props) {
-  const [page, setPage] = useState(0);
+export function DataTable({ columns, rows, total, limit, offset, onPageChange, isLoading }: Props) {
   const [sortKey, setSortKey] = useState<string>('');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
@@ -24,21 +28,25 @@ export function DataTable({ columns, rows }: Props) {
     });
   }, [rows, sortKey, sortDir]);
 
-  const paged = useMemo(
-    () => sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
-    [sorted, page]
-  );
-
-  const totalPages = Math.ceil(rows.length / PAGE_SIZE);
+  // Use props for pagination if available, otherwise fall back to client-side (though now we expect server-side)
+  const isServerSide = total !== undefined && limit !== undefined && offset !== undefined;
+  
+  const currentPage = isServerSide ? Math.floor(offset / limit) : 0;
+  const totalPages = isServerSide ? Math.ceil(total / limit) : 1;
 
   const handleSort = (key: string) => {
-    setPage(0);
     if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     else { setSortKey(key); setSortDir('asc'); }
   };
 
+  const handlePageChange = (newPage: number) => {
+    if (onPageChange && isServerSide) {
+      onPageChange(newPage * limit);
+    }
+  };
+
   return (
-    <div>
+    <div className={isLoading ? 'opacity-50 pointer-events-none transition-opacity' : 'transition-opacity'}>
       <div className="table-container border border-surface-border">
         <table className="w-full text-sm">
           <thead>
@@ -68,17 +76,17 @@ export function DataTable({ columns, rows }: Props) {
             </tr>
           </thead>
           <tbody>
-            {paged.length === 0 ? (
+            {sorted.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length}
                   className="px-4 py-8 text-center text-slate-500"
                 >
-                  No rows returned.
+                  {isLoading ? 'Loading results...' : 'No rows returned.'}
                 </td>
               </tr>
             ) : (
-              paged.map((row, i) => (
+              sorted.map((row, i) => (
                 <tr
                   key={i}
                   className="border-b border-surface-border/50 hover:bg-surface-hover transition-colors"
@@ -101,19 +109,19 @@ export function DataTable({ columns, rows }: Props) {
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-3 text-xs text-slate-500">
           <span>
-            Page {page + 1} of {totalPages} · {rows.length} total rows
+            Page {currentPage + 1} of {totalPages} · {total} total rows
           </span>
           <div className="flex gap-2">
             <button
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 0 || isLoading}
               className="px-3 py-1.5 rounded-lg glass hover:text-white disabled:opacity-30 transition-colors"
             >
               ← Prev
             </button>
             <button
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              disabled={page === totalPages - 1}
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages - 1 || isLoading}
               className="px-3 py-1.5 rounded-lg glass hover:text-white disabled:opacity-30 transition-colors"
             >
               Next →

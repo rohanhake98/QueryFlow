@@ -1,14 +1,19 @@
 'use client';
-import type { QueryResult, VisualizationMeta } from '@/types';
 import { BarChartView } from '@/components/charts/BarChartView';
+import { DataTable } from '@/components/charts/DataTable';
+import { KpiCard } from '@/components/charts/KpiCard';
 import { LineChartView } from '@/components/charts/LineChartView';
 import { PieChartView } from '@/components/charts/PieChartView';
-import { KpiCard } from '@/components/charts/KpiCard';
-import { DataTable } from '@/components/charts/DataTable';
+import type { QueryResult, VisualizationMeta } from '@/types';
 
-interface Props { result: QueryResult; visualization: VisualizationMeta; }
+interface Props { 
+  result: QueryResult; 
+  visualization: VisualizationMeta; 
+  onPageChange?: (offset: number) => void;
+  isLoading?: boolean;
+}
 
-export function ResultsPanel({ result, visualization }: Props) {
+export function ResultsPanel({ result, visualization, onPageChange, isLoading }: Props) {
   const { chart_type, x_axis, y_axis, title } = visualization;
 
   const downloadCsv = () => {
@@ -81,7 +86,15 @@ export function ResultsPanel({ result, visualization }: Props) {
           <PieChartView data={result.rows} nameKey={x_axis} valueKey={y_axis} />
         )}
         {(chart_type === 'table' || (!['kpi', 'bar', 'line', 'pie'].includes(chart_type))) && (
-          <DataTable columns={result.columns} rows={result.rows} />
+          <DataTable 
+            columns={result.columns} 
+            rows={result.rows} 
+            total={result.total}
+            limit={result.limit}
+            offset={result.offset}
+            onPageChange={onPageChange}
+            isLoading={isLoading}
+          />
         )}
       </div>
     </div>

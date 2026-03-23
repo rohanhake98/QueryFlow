@@ -27,6 +27,9 @@ export interface QueryResult {
   columns: ColumnMeta[];
   rows: Record<string, unknown>[];
   row_count: number;
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 export interface VisualizationMeta {

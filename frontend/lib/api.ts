@@ -112,6 +112,19 @@ export const authApi = {
   },
 };
 
+// ─── Upload ──────────────────────────────────────────────────────
+export const uploadApi = {
+  uploadFile: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/upload/file', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+};
+
 // ─── Connections ─────────────────────────────────────────────────
 export const connectionsApi = {
   create: (data: ConnectionCreateRequest) => {
@@ -134,7 +147,7 @@ export const connectionsApi = {
 
 // ─── Query ───────────────────────────────────────────────────────
 export const queryApi = {
-  ask: (connection_id: string, question: string): Promise<{ data: QueryResponse }> => {
+  ask: (connection_id: string, question: string, limit = 100, offset = 0): Promise<{ data: QueryResponse }> => {
     if (isDevBypass()) {
       const rows = [
         { metric: 'Revenue', value: 124000 },
@@ -155,6 +168,9 @@ export const queryApi = {
             ],
             rows,
             row_count: rows.length,
+            total: 1000,
+            limit,
+            offset,
           },
           visualization: {
             chart_type: 'bar',
@@ -165,7 +181,7 @@ export const queryApi = {
         },
       });
     }
-    return api.post('/query/ask', { connection_id, question });
+    return api.post('/query/ask', { connection_id, question, limit, offset });
   },
 };
 

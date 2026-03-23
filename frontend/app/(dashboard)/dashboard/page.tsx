@@ -2,11 +2,10 @@
 import { QueryStatusBar } from '@/components/query/QueryStatusBar';
 import { ResultsPanel } from '@/components/query/ResultsPanel';
 import { useConnections } from '@/hooks/useConnections';
-import { queryApi } from '@/lib/api';
+import { queryApi, uploadApi } from '@/lib/api';
 import { formatMs } from '@/lib/utils';
 import type { LoadingStep, QueryResponse } from '@/types';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import React, { useRef, useState } from 'react';
 
 const SqlPreviewPanel = dynamic(
@@ -37,22 +36,60 @@ export default function DashboardPage() {
   const [queryResult, setQueryResult] = useState<QueryResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({ limit: 100, offset: 0 });
+  const [uploading, setUploading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isLoading = loadingStep !== 'idle' && loadingStep !== 'done';
 
-  const handleAsk = async () => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setError(null);
+    try {
+      const { data } = await uploadApi.uploadFile(file);
+      // Data contains { connection_id, display_name, ... }
+      setSelectedConn(data.connection_id);
+      setQuestion(`Show data from ${data.table_name}`);
+      // Add virtual connection to local state if needed, but for now we'll just set it as active
+    } catch (err: any) {
+      setError('Failed to upload file. Please try a different CSV or Excel file.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleAsk = async (newLimit?: number, newOffset?: number) => {
     if (!question.trim() || !selectedConn) return;
+    
+    // Determine the actual limit and offset to use for this request
+    // If both are provided, we are paginating; otherwise, we are starting a new query
+    const isPaginating = newLimit !== undefined || newOffset !== undefined;
+    const limit = isPaginating ? (newLimit ?? pagination.limit) : 100;
+    const offset = isPaginating ? (newOffset ?? 0) : 0;
+    
+    // Update pagination state
+    setPagination({ limit, offset });
+
     setError(null);
     setAiExplanation(null);
-    setQueryResult(null);
+    if (offset === 0) setQueryResult(null); // Only clear results on new query or first page
     setLoadingStep('generating');
 
     try {
       setLoadingStep('validating');
       setLoadingStep('executing');
 
-      const { data } = await queryApi.ask(selectedConn, question.trim());
+      const { data } = await queryApi.ask(
+        selectedConn, 
+        question.trim(), 
+        limit, 
+        offset
+      );
 
       setLoadingStep('rendering');
       setQueryResult(data);
@@ -88,34 +125,51 @@ export default function DashboardPage() {
       <div className="glass rounded-xl p-4 mb-4 flex items-center gap-3">
         <label htmlFor="connection-select" className="text-slate-400 text-sm font-medium whitespace-nowrap flex items-center gap-1.5">
           <span aria-hidden="true">🔗</span>
-          <span>Database:</span>
+          <span>Data Source:</span>
         </label>
 
         {connLoading ? (
           <div className="shimmer h-9 flex-1 rounded-lg" />
-        ) : connections && connections.length > 0 ? (
-          <select
-            id="connection-select"
-            value={selectedConn}
-            onChange={(e) => setSelectedConn(e.target.value)}
-            className="flex-1 px-3 py-2 rounded-lg bg-surface border border-surface-border text-white text-sm focus:outline-none focus:border-brand-500 transition-colors cursor-pointer"
-          >
-            <option value="">Select a database connection…</option>
-            {connections.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.db_type === 'postgresql' ? '🐘' : '🐬'} {c.display_name} — {c.database_name}
-              </option>
-            ))}
-          </select>
         ) : (
-          <div className="flex items-center gap-3">
-            <span className="text-slate-500 text-sm">No connections yet.</span>
-            <Link
-              href="/connections/new"
-              className="text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"
+          <div className="flex-1 flex gap-3">
+            <select
+              id="connection-select"
+              value={selectedConn}
+              onChange={(e) => setSelectedConn(e.target.value)}
+              className="flex-1 px-3 py-2 rounded-lg bg-surface border border-surface-border text-white text-sm focus:outline-none focus:border-brand-500 transition-colors cursor-pointer"
             >
-              + Add Connection
-            </Link>
+              <option value="">Select a connection or upload a file…</option>
+              {connections && connections.length > 0 && connections.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.db_type === 'postgresql' ? '🐘' : '🐬'} {c.display_name}
+                </option>
+              ))}
+              {selectedConn && !connections?.find(c => c.id === selectedConn) && (
+                <option value={selectedConn}>📁 Active File Upload</option>
+              )}
+            </select>
+            
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept=".csv,.xlsx,.xls"
+              className="hidden"
+              id="file-upload"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="px-4 py-2 rounded-lg bg-surface-hover border border-surface-border text-slate-300 text-sm hover:text-white hover:border-brand-500/50 transition-all flex items-center gap-2"
+            >
+              {uploading ? (
+                <span className="step-pulse">⏳</span>
+              ) : (
+                <span aria-hidden="true">📁</span>
+              )}
+              <span>Upload CSV/Excel</span>
+            </button>
           </div>
         )}
       </div>
@@ -145,7 +199,7 @@ export default function DashboardPage() {
           <button
             id="run-query-btn"
             type="button"
-            onClick={handleAsk}
+            onClick={() => handleAsk()}
             disabled={isLoading || !question.trim() || !selectedConn}
             className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-brand-500 to-violet-500 hover:from-brand-400 hover:to-violet-400 text-white font-semibold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-glow hover:shadow-glow-lg active:scale-95"
           >
@@ -211,7 +265,7 @@ export default function DashboardPage() {
               <span aria-hidden="true">⏱</span> {formatMs(queryResult.execution_time_ms)}
             </span>
             <span className="px-2 py-1 bg-surface-card rounded-full">
-              <span aria-hidden="true">📋</span> {queryResult.result.row_count} rows
+              <span aria-hidden="true">📋</span> {queryResult.result.total} rows total
             </span>
             <span className="px-2 py-1 bg-surface-card rounded-full capitalize">
               <span aria-hidden="true">📊</span> {queryResult.visualization.chart_type}
@@ -220,12 +274,14 @@ export default function DashboardPage() {
 
           <SqlPreviewPanel
             sql={queryResult.generated_sql}
-            queryId={queryResult.query_id}
+            query_id={queryResult.query_id}
           />
 
           <ResultsPanel
             result={queryResult.result}
             visualization={queryResult.visualization}
+            onPageChange={(newOffset) => handleAsk(pagination.limit, newOffset)}
+            isLoading={isLoading}
           />
         </div>
       )}

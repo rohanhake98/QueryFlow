@@ -6,6 +6,8 @@ from typing import Any
 class QueryAskRequest(BaseModel):
     connection_id: str
     question: str
+    limit: int = 100
+    offset: int = 0
 
 
 class ColumnMeta(BaseModel):
@@ -17,6 +19,9 @@ class QueryResult(BaseModel):
     columns: list[ColumnMeta]
     rows: list[dict[str, Any]]
     row_count: int
+    total: int
+    limit: int
+    offset: int
 
 
 class VisualizationMeta(BaseModel):
