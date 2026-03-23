@@ -1,12 +1,13 @@
 'use client';
-import React, { useState, useRef } from 'react';
+import { QueryStatusBar } from '@/components/query/QueryStatusBar';
+import { ResultsPanel } from '@/components/query/ResultsPanel';
 import { useConnections } from '@/hooks/useConnections';
 import { queryApi } from '@/lib/api';
-import type { QueryResponse, LoadingStep } from '@/types';
 import { formatMs } from '@/lib/utils';
+import type { LoadingStep, QueryResponse } from '@/types';
 import dynamic from 'next/dynamic';
-import { ResultsPanel } from '@/components/query/ResultsPanel';
-import { QueryStatusBar } from '@/components/query/QueryStatusBar';
+import Link from 'next/link';
+import React, { useRef, useState } from 'react';
 
 const SqlPreviewPanel = dynamic(
   () => import('@/components/query/SqlPreviewPanel'),
@@ -48,15 +49,12 @@ export default function DashboardPage() {
     setLoadingStep('generating');
 
     try {
-      await new Promise((r) => setTimeout(r, 400));
       setLoadingStep('validating');
-      await new Promise((r) => setTimeout(r, 300));
       setLoadingStep('executing');
 
       const { data } = await queryApi.ask(selectedConn, question.trim());
 
       setLoadingStep('rendering');
-      await new Promise((r) => setTimeout(r, 200));
       setQueryResult(data);
       setLoadingStep('done');
     } catch (err: any) {
@@ -77,7 +75,6 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl mx-auto">
-      {/* ── Page header ─────────────────────────────── */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white tracking-tight mb-1">
           Query Your Data
@@ -88,11 +85,11 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* ── Connection selector ──────────────────────── */}
       <div className="glass rounded-xl p-4 mb-4 flex items-center gap-3">
-        <span className="text-slate-400 text-sm font-medium whitespace-nowrap flex items-center gap-1.5">
-          🔗 <span>Database:</span>
-        </span>
+        <label htmlFor="connection-select" className="text-slate-400 text-sm font-medium whitespace-nowrap flex items-center gap-1.5">
+          <span aria-hidden="true">🔗</span>
+          <span>Database:</span>
+        </label>
 
         {connLoading ? (
           <div className="shimmer h-9 flex-1 rounded-lg" />
@@ -106,26 +103,25 @@ export default function DashboardPage() {
             <option value="">Select a database connection…</option>
             {connections.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.db_type === 'postgresql' ? '🐘' : '🐬'} {c.display_name} —{' '}
-                {c.database_name}
+                {c.db_type === 'postgresql' ? '🐘' : '🐬'} {c.display_name} — {c.database_name}
               </option>
             ))}
           </select>
         ) : (
           <div className="flex items-center gap-3">
             <span className="text-slate-500 text-sm">No connections yet.</span>
-            <a
+            <Link
               href="/connections/new"
               className="text-brand-400 hover:text-brand-300 text-sm font-medium transition-colors"
             >
               + Add Connection
-            </a>
+            </Link>
           </div>
         )}
       </div>
 
-      {/* ── Question input ───────────────────────────── */}
-      <div className="glass rounded-xl overflow-hidden mb-4 hover-glow">
+      <div className="glass rounded-xl overflow-hidden mb-4 hover-glow" aria-busy={isLoading}>
+        <label htmlFor="question-input" className="sr-only">Ask a question</label>
         <textarea
           ref={textareaRef}
           id="question-input"
@@ -136,9 +132,10 @@ export default function DashboardPage() {
           rows={3}
           className="w-full px-6 pt-5 pb-2 bg-transparent text-white placeholder-slate-600 resize-none focus:outline-none text-base leading-relaxed"
           disabled={isLoading}
+          aria-describedby="question-help"
         />
         <div className="flex items-center justify-between px-6 pb-4 pt-1">
-          <span className="text-slate-600 text-xs">
+          <span id="question-help" className="text-slate-600 text-xs">
             Press{' '}
             <kbd className="px-1.5 py-0.5 bg-surface-hover rounded text-slate-500 text-xs font-mono">
               Ctrl+Enter
@@ -147,13 +144,14 @@ export default function DashboardPage() {
           </span>
           <button
             id="run-query-btn"
+            type="button"
             onClick={handleAsk}
             disabled={isLoading || !question.trim() || !selectedConn}
             className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-brand-500 to-violet-500 hover:from-brand-400 hover:to-violet-400 text-white font-semibold text-sm transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-glow hover:shadow-glow-lg active:scale-95"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
-                <span className="step-pulse">⏳</span> Running…
+                <span className="step-pulse" aria-hidden="true">⏳</span> Running…
               </span>
             ) : (
               '▶ Run Query'
@@ -162,14 +160,15 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Example prompts ──────────────────────────── */}
       {!queryResult && !isLoading && (
         <div className="flex flex-wrap gap-2 mb-6">
           {EXAMPLE_QUESTIONS.map((ex) => (
             <button
+              type="button"
               key={ex}
               onClick={() => setQuestion(ex)}
               className="px-3 py-1.5 rounded-full glass text-slate-400 hover:text-white hover:border-brand-500/40 text-xs transition-all"
+              aria-label={`Use example question: ${ex}`}
             >
               {ex}
             </button>
@@ -177,16 +176,14 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Loading steps ────────────────────────────── */}
       {isLoading && (
         <QueryStatusBar currentStep={loadingStep} steps={STEPS} />
       )}
 
-      {/* ── Error display ────────────────────────────── */}
       {error && (
-        <div className="glass rounded-xl px-5 py-4 border border-red-500/30 bg-red-500/5 mb-4 animate-fade-in">
+        <div className="glass rounded-xl px-5 py-4 border border-red-500/30 bg-red-500/5 mb-4 animate-fade-in" role="alert">
           <div className="flex items-start gap-2 text-red-400 text-sm font-medium mb-1">
-            <span className="flex-shrink-0">❌</span>
+            <span className="flex-shrink-0" aria-hidden="true">❌</span>
             <span>{error}</span>
           </div>
           {aiExplanation && (
@@ -195,41 +192,37 @@ export default function DashboardPage() {
                 AI Insight
               </p>
               <p className="text-slate-300 text-sm italic leading-relaxed">
-                "{aiExplanation}"
+                &quot;{aiExplanation}&quot;
               </p>
             </div>
           )}
         </div>
       )}
 
-      {/* ── Results ──────────────────────────────────── */}
       {queryResult && (
         <div className="animate-fade-in space-y-4">
-          {/* Meta chips */}
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
             {queryResult.was_corrected && (
               <span className="px-2 py-1 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 rounded-full">
-                ⚠️ Auto-corrected
+                <span aria-hidden="true">⚠️</span> Auto-corrected
               </span>
             )}
             <span className="px-2 py-1 bg-surface-card rounded-full">
-              ⏱ {formatMs(queryResult.execution_time_ms)}
+              <span aria-hidden="true">⏱</span> {formatMs(queryResult.execution_time_ms)}
             </span>
             <span className="px-2 py-1 bg-surface-card rounded-full">
-              📋 {queryResult.result.row_count} rows
+              <span aria-hidden="true">📋</span> {queryResult.result.row_count} rows
             </span>
             <span className="px-2 py-1 bg-surface-card rounded-full capitalize">
-              📊 {queryResult.visualization.chart_type}
+              <span aria-hidden="true">📊</span> {queryResult.visualization.chart_type}
             </span>
           </div>
 
-          {/* SQL Preview */}
           <SqlPreviewPanel
             sql={queryResult.generated_sql}
             queryId={queryResult.query_id}
           />
 
-          {/* Results Panel */}
           <ResultsPanel
             result={queryResult.result}
             visualization={queryResult.visualization}

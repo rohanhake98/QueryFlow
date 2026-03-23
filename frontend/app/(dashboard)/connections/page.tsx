@@ -50,7 +50,7 @@ export default function ConnectionsPage() {
         </div>
       ) : connections?.length === 0 ? (
         <div className="text-center py-20 glass rounded-2xl">
-          <div className="text-5xl mb-4">🔗</div>
+          <div className="text-5xl mb-4" aria-hidden="true">🔗</div>
           <h3 className="text-xl font-semibold mb-2">No connections yet</h3>
           <p className="text-slate-400 mb-6">Connect your first database to start querying.</p>
           <Link href="/connections/new" className="text-brand-400 hover:text-brand-300 font-medium">
@@ -63,30 +63,32 @@ export default function ConnectionsPage() {
             <div key={conn.id} className="glass rounded-2xl p-6 relative group">
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
+                  type="button"
                   onClick={() => handleRefresh(conn.id)}
                   disabled={refreshingId === conn.id}
                   className="p-2 bg-surface-hover rounded-lg hover:bg-surface-border transition-colors text-slate-300 disabled:opacity-50"
-                  title="Refresh Schema"
+                  aria-label="Refresh schema"
                 >
-                  {refreshingId === conn.id ? '⏳' : '🔄'}
+                  <span aria-hidden="true">{refreshingId === conn.id ? '⏳' : '🔄'}</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleDelete(conn.id, conn.display_name)}
                   className="p-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors"
-                  title="Delete"
+                  aria-label={`Delete connection ${conn.display_name}`}
                 >
-                  🗑
+                  <span aria-hidden="true">🗑</span>
                 </button>
               </div>
 
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-surface-hover flex items-center justify-center text-xl">
-                  {conn.db_type === 'postgresql' ? '🐘' : '🐬'}
+                  <span aria-hidden="true">{conn.db_type === 'postgresql' ? '🐘' : '🐬'}</span>
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">{conn.display_name}</h3>
                   <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <span className="flex items-center gap-1"><span className="status-dot success"></span> Active</span>
+                    <span className="flex items-center gap-1"><span className="status-dot success" aria-hidden="true"></span> Active</span>
                     <span>·</span>
                     <span>{conn.db_type}</span>
                   </div>

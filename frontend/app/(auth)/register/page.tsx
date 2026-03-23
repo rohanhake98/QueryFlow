@@ -48,7 +48,7 @@ export default function RegisterPage() {
         <div className="glass rounded-2xl p-8 shadow-card">
           {success ? (
             <div className="text-center py-6">
-              <div className="text-4xl mb-4">🎉</div>
+              <div className="text-4xl mb-4" aria-hidden="true">🎉</div>
               <h3 className="text-xl font-semibold text-white mb-2">Account Created!</h3>
               <p className="text-slate-400">Redirecting you to login...</p>
             </div>
@@ -91,7 +91,7 @@ export default function RegisterPage() {
               </div>
 
               {error && (
-                <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+                <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm" role="alert">
                   {error}
                 </div>
               )}

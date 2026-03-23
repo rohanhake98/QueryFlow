@@ -1,6 +1,6 @@
 'use client';
-import type { LoadingStep } from '@/types';
 import { cn } from '@/lib/utils';
+import type { LoadingStep } from '@/types';
 
 interface Step { key: LoadingStep; label: string; }
 
@@ -8,7 +8,7 @@ export function QueryStatusBar({ currentStep, steps }: { currentStep: LoadingSte
   const currentIdx = currentStep === 'done' ? steps.length : steps.findIndex((s) => s.key === currentStep);
 
   return (
-    <div className="glass rounded-xl p-5 mb-4 animate-fade-in">
+    <div className="glass rounded-xl p-5 mb-4 animate-fade-in" role="status" aria-live="polite">
       <div className="space-y-3">
         {steps.map((step, i) => {
           const done = i < currentIdx;

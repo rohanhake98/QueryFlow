@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
@@ -17,6 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const router   = useRouter();
   const { user, logout } = useAuthStore();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
     await authApi.logout();
@@ -26,18 +27,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="dashboard-layout">
-      {/* ── Sidebar ─────────────────────────────── */}
-      <aside className="sidebar">
-        {/* Logo */}
-        <div className="p-6 border-b border-surface-border flex-shrink-0">
-          <Link href="/dashboard" className="flex items-center gap-2 group">
-            <span className="text-2xl">⚡</span>
+      <button
+        type="button"
+        onClick={() => setSidebarOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-50 px-3 py-2 rounded-lg bg-surface-card border border-surface-border text-slate-200 hover:text-white transition-colors"
+        aria-label="Open navigation"
+      >
+        ☰
+      </button>
+
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          aria-hidden="true"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside className={cn('sidebar', sidebarOpen && 'is-open')} aria-label="Primary">
+        <div className="p-6 border-b border-surface-border flex-shrink-0 flex items-center justify-between gap-3">
+          <Link href="/dashboard" className="flex items-center gap-2 group" onClick={() => setSidebarOpen(false)}>
+            <span className="text-2xl" aria-hidden="true">⚡</span>
             <span className="text-xl font-bold gradient-text">QueryFlow</span>
           </Link>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden text-slate-400 hover:text-white transition-colors"
+            aria-label="Close navigation"
+          >
+            ✕
+          </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto" aria-label="Dashboard">
           {NAV_ITEMS.map((item) => {
             const active =
               pathname === item.href || pathname.startsWith(item.href + '/');
@@ -51,8 +74,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     ? 'bg-brand-500/15 text-brand-300 border border-brand-500/30'
                     : 'text-slate-400 hover:text-white hover:bg-surface-hover'
                 )}
+                onClick={() => setSidebarOpen(false)}
               >
-                <span className="text-lg leading-none">{item.icon}</span>
+                <span className="text-lg leading-none" aria-hidden="true">{item.icon}</span>
                 <span>{item.label}</span>
                 {active && (
                   <div className="ml-auto w-1.5 h-1.5 rounded-full bg-brand-400 flex-shrink-0" />
@@ -62,7 +86,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        {/* User section */}
         <div className="p-4 border-t border-surface-border flex-shrink-0">
           <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-surface-hover mb-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
@@ -82,13 +105,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             onClick={handleLogout}
             className="w-full px-4 py-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 text-sm font-medium transition-all duration-200 text-left"
           >
-            🚪 Sign Out
+            <span aria-hidden="true">🚪</span> Sign Out
           </button>
         </div>
       </aside>
 
-      {/* ── Main content ─────────────────────────── */}
-      <main className="main-content">
+      <main id="main-content" className="main-content">
         {children}
       </main>
     </div>

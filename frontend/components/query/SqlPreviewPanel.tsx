@@ -31,7 +31,6 @@ export default function SqlPreviewPanel({ sql, queryId }: Props) {
 
   return (
     <div className="glass rounded-xl overflow-hidden">
-      {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-surface-border">
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono text-brand-400 font-semibold">SQL</span>
@@ -46,24 +45,24 @@ export default function SqlPreviewPanel({ sql, queryId }: Props) {
                 onChange={(e) => setSaveName(e.target.value)}
                 placeholder="Query name..."
                 className="px-3 py-1.5 rounded-lg bg-surface border border-surface-border text-white text-xs focus:outline-none focus:border-brand-500"
+                aria-label="Query name"
               />
-              <button onClick={handleSave} disabled={saving} className="px-3 py-1.5 rounded-lg bg-brand-500 text-white text-xs font-semibold transition-colors hover:bg-brand-400 disabled:opacity-50">
+              <button type="button" onClick={handleSave} disabled={saving} className="px-3 py-1.5 rounded-lg bg-brand-500 text-white text-xs font-semibold transition-colors hover:bg-brand-400 disabled:opacity-50">
                 {saving ? 'Saving...' : 'Save'}
               </button>
-              <button onClick={() => setShowSave(false)} className="text-slate-500 hover:text-white text-xs">✕</button>
+              <button type="button" onClick={() => setShowSave(false)} className="text-slate-500 hover:text-white text-xs" aria-label="Cancel save">✕</button>
             </div>
           )}
           {!showSave && (
-            <button id="save-query-btn" onClick={() => setShowSave(true)} className="px-3 py-1.5 rounded-lg bg-surface-hover text-slate-400 hover:text-white text-xs font-medium transition-colors">
-              ⭐ Save
+            <button id="save-query-btn" type="button" onClick={() => setShowSave(true)} className="px-3 py-1.5 rounded-lg bg-surface-hover text-slate-400 hover:text-white text-xs font-medium transition-colors" aria-label="Save query">
+              <span aria-hidden="true">⭐</span> Save
             </button>
           )}
-          <button id="copy-sql-btn" onClick={handleCopy} className="px-3 py-1.5 rounded-lg bg-surface-hover text-slate-400 hover:text-white text-xs font-medium transition-colors">
-            {copied ? '✓ Copied!' : '📋 Copy'}
+          <button id="copy-sql-btn" type="button" onClick={handleCopy} className="px-3 py-1.5 rounded-lg bg-surface-hover text-slate-400 hover:text-white text-xs font-medium transition-colors" aria-live="polite">
+            {copied ? '✓ Copied!' : 'Copy'}
           </button>
         </div>
       </div>
-      {/* Editor */}
       <Editor
         height="160px"
         language="sql"
@@ -74,7 +73,7 @@ export default function SqlPreviewPanel({ sql, queryId }: Props) {
           minimap: { enabled: false },
           scrollBeyondLastLine: false,
           fontSize: 13,
-          fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+          fontFamily: 'var(--font-mono), ui-monospace, monospace',
           lineNumbers: 'off',
           folding: false,
           glyphMargin: false,

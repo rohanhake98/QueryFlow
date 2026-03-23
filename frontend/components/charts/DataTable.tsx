@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import type { ColumnMeta } from '@/types';
 
 const PAGE_SIZE = 20;
@@ -14,19 +14,25 @@ export function DataTable({ columns, rows }: Props) {
   const [sortKey, setSortKey] = useState<string>('');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
-  const sorted = sortKey
-    ? [...rows].sort((a, b) => {
-        const av = a[sortKey] as string | number;
-        const bv = b[sortKey] as string | number;
-        if (av === bv) return 0;
-        return sortDir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
-      })
-    : rows;
+  const sorted = useMemo(() => {
+    if (!sortKey) return rows;
+    return [...rows].sort((a, b) => {
+      const av = a[sortKey] as string | number;
+      const bv = b[sortKey] as string | number;
+      if (av === bv) return 0;
+      return sortDir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+    });
+  }, [rows, sortKey, sortDir]);
 
-  const paged      = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const paged = useMemo(
+    () => sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
+    [sorted, page]
+  );
+
   const totalPages = Math.ceil(rows.length / PAGE_SIZE);
 
   const handleSort = (key: string) => {
+    setPage(0);
     if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     else { setSortKey(key); setSortDir('asc'); }
   };
@@ -37,16 +43,28 @@ export function DataTable({ columns, rows }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-surface-border bg-surface">
-              {columns.map((col) => (
-                <th
-                  key={col.name}
-                  onClick={() => handleSort(col.name)}
-                  className="px-4 py-3 text-left text-slate-400 font-medium cursor-pointer hover:text-white transition-colors whitespace-nowrap select-none"
-                >
-                  {col.name.replace(/_/g, ' ')}
-                  {sortKey === col.name ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                </th>
-              ))}
+              {columns.map((col) => {
+                const isActive = sortKey === col.name;
+                const ariaSort = isActive ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none';
+                return (
+                  <th
+                    key={col.name}
+                    scope="col"
+                    aria-sort={ariaSort}
+                    className="px-4 py-3 text-left text-slate-400 font-medium whitespace-nowrap"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleSort(col.name)}
+                      className="inline-flex items-center gap-2 hover:text-white transition-colors select-none"
+                      aria-label={`Sort by ${col.name.replace(/_/g, ' ')}`}
+                    >
+                      <span>{col.name.replace(/_/g, ' ')}</span>
+                      <span aria-hidden="true">{isActive ? (sortDir === 'asc' ? '↑' : '↓') : ''}</span>
+                    </button>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>

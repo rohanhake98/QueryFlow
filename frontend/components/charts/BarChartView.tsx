@@ -6,8 +6,11 @@ const COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#22c55e', '#f59e0b', '#ef4444'
 interface Props { data: Record<string, unknown>[]; xKey: string; yKey: string; title?: string | null; }
 
 export function BarChartView({ data, xKey, yKey, title }: Props) {
+  const ariaLabel = title
+    ? `${title} bar chart`
+    : `${yKey.replace(/_/g, ' ')} by ${xKey.replace(/_/g, ' ')} bar chart`;
   return (
-    <div>
+    <div role="img" aria-label={ariaLabel}>
       {title && <p className="text-sm text-slate-400 mb-4">{title}</p>}
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 60 }}>

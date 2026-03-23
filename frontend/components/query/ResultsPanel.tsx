@@ -49,15 +49,21 @@ export function ResultsPanel({ result, visualization }: Props) {
           {title || 'Query Results'} · {result.row_count} rows
         </span>
         <div className="flex items-center gap-2">
-          <button 
+          <button
+            type="button"
             onClick={downloadCsv}
-            className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-surface-hover hover:bg-surface-border text-slate-400 hover:text-white transition-all"
+            disabled={!result.rows.length}
+            className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-surface-hover hover:bg-surface-border text-slate-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label="Download results as CSV"
           >
             CSV
           </button>
-          <button 
+          <button
+            type="button"
             onClick={downloadJson}
-            className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-surface-hover hover:bg-surface-border text-slate-400 hover:text-white transition-all"
+            disabled={!result.rows.length}
+            className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-surface-hover hover:bg-surface-border text-slate-400 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label="Download results as JSON"
           >
             JSON
           </button>

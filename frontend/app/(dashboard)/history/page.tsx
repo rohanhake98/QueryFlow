@@ -1,9 +1,10 @@
 'use client';
-import { useQueryHistory } from '@/hooks/useQueryHistory';
 import { useConnections } from '@/hooks/useConnections';
-import { useState } from 'react';
+import { useQueryHistory } from '@/hooks/useQueryHistory';
 import { formatDate, formatMs } from '@/lib/utils';
+import type { HistoryItem } from '@/types';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function HistoryPage() {
   const [selectedConn, setSelectedConn] = useState('');
@@ -28,7 +29,9 @@ export default function HistoryPage() {
         </div>
         
         <div className="flex items-center gap-4">
+          <label htmlFor="history-search" className="sr-only">Search query history</label>
           <input 
+            id="history-search"
             type="text" 
             placeholder="Search queries..." 
             value={search}
@@ -41,7 +44,8 @@ export default function HistoryPage() {
             <span className="text-sm text-slate-300">Saved only</span>
           </label>
           
-          <select value={selectedConn} onChange={(e) => setSelectedConn(e.target.value)} className="px-3 py-2 rounded-lg bg-surface border border-surface-border text-white text-sm outline-none w-48 focus:border-brand-500">
+          <label htmlFor="history-connection" className="sr-only">Filter by connection</label>
+          <select id="history-connection" value={selectedConn} onChange={(e) => setSelectedConn(e.target.value)} className="px-3 py-2 rounded-lg bg-surface border border-surface-border text-white text-sm outline-none w-48 focus:border-brand-500">
             <option value="">All Connections</option>
             {connections?.map(c => <option key={c.id} value={c.id}>{c.display_name}</option>)}
           </select>
@@ -56,21 +60,22 @@ export default function HistoryPage() {
             {search ? 'No queries match your search.' : 'No history found. Go ask a question!'}
           </div>
         ) : (
-          filteredHistory?.map((item: any) => (
+          filteredHistory?.map((item: HistoryItem) => (
             <div key={item.id} className="glass rounded-xl p-5 hover:border-surface-border transition-colors">
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <h3 className="font-medium text-white text-lg">
-                    {item.is_saved && <span className="text-yellow-400 mr-2">⭐</span>}
+                    {item.is_saved && <span className="text-yellow-400 mr-2" aria-hidden="true">⭐</span>}
                     {item.saved_name || item.question}
                   </h3>
-                  {item.saved_name && <p className="text-slate-400 text-sm mt-1">"{item.question}"</p>}
+                  {item.saved_name && <p className="text-slate-400 text-sm mt-1">&quot;{item.question}&quot;</p>}
                 </div>
-                <button 
+                <button
+                  type="button"
                   onClick={() => router.push('/dashboard')} 
                   className="px-3 py-1.5 bg-surface-hover hover:bg-surface-border text-white text-sm rounded-lg transition-colors border border-transparent hover:border-slate-700"
                 >
-                  ▶ Open
+                  <span aria-hidden="true">▶</span> Open
                 </button>
               </div>
               
@@ -89,9 +94,9 @@ export default function HistoryPage() {
                     {item.chart_type && <span className="capitalize">{item.chart_type} Chart</span>}
                   </>
                 ) : item.status === 'blocked' ? (
-                  <span className="text-yellow-500">⚠ Blocked for safety</span>
+                  <span className="text-yellow-500"><span aria-hidden="true">⚠</span> Blocked for safety</span>
                 ) : (
-                  <span className="text-red-400">❌ Error</span>
+                  <span className="text-red-400"><span aria-hidden="true">❌</span> Error</span>
                 )}
                 {item.was_corrected && <span className="px-2 py-0.5 bg-yellow-500/10 text-yellow-400 rounded-full">Auto-corrected</span>}
               </div>
@@ -101,7 +106,7 @@ export default function HistoryPage() {
       </div>
       
       {history && history.total > 50 && (
-         <div className="text-center mt-6 text-sm text-slate-500">Showing 50 most recent queries. Implement pagination for more.</div>
+         <div className="text-center mt-6 text-sm text-slate-500">Showing 50 most recent queries.</div>
       )}
     </div>
   );

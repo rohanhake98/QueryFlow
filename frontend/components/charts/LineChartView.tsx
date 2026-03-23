@@ -4,8 +4,11 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 interface Props { data: Record<string, unknown>[]; xKey: string; yKey: string; title?: string | null; }
 
 export function LineChartView({ data, xKey, yKey, title }: Props) {
+  const ariaLabel = title
+    ? `${title} line chart`
+    : `${yKey.replace(/_/g, ' ')} by ${xKey.replace(/_/g, ' ')} line chart`;
   return (
-    <div>
+    <div role="img" aria-label={ariaLabel}>
       {title && <p className="text-sm text-slate-400 mb-4">{title}</p>}
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
