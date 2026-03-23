@@ -1,16 +1,34 @@
 'use client';
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
+import type { User } from '@/types';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
+  const setAuthState = useAuthStore((s) => s.setAuthState);
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleDemo = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dev_bypass', '1');
+      localStorage.setItem('access_token', 'demo-token');
+    }
+    const demoUser: User = {
+      id: 'demo-user',
+      email: 'demo@queryflow.local',
+      full_name: 'Demo User',
+      is_verified: true,
+      avatar_url: null,
+    };
+    setAuthState(demoUser, 'demo-token');
+    router.push('/dashboard');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +102,13 @@ export default function LoginPage() {
               className="w-full py-3 rounded-xl bg-gradient-to-r from-brand-500 to-violet-500 hover:from-brand-400 hover:to-violet-400 text-white font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-glow hover:shadow-glow-lg"
             >
               {loading ? 'Signing in...' : 'Sign In'}
+            </button>
+            <button
+              type="button"
+              onClick={handleDemo}
+              className="w-full py-3 rounded-xl border border-surface-border text-slate-200 hover:text-white hover:border-brand-500/60 transition-colors"
+            >
+              Use Demo Access
             </button>
           </form>
 

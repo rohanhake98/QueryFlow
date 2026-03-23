@@ -1996,6 +1996,9 @@ input, textarea, select {
 .hover\:border-brand-500\/40:hover {
   border-color: rgb(99 102 241 / 0.4);
 }
+.hover\:border-brand-500\/60:hover {
+  border-color: rgb(99 102 241 / 0.6);
+}
 .hover\:border-slate-700:hover {
   --tw-border-opacity: 1;
   border-color: rgb(51 65 85 / var(--tw-border-opacity));

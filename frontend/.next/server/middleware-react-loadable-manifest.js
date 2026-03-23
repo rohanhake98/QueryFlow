@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{}"
+self.__REACT_LOADABLE_MANIFEST="{\"app\\\\(dashboard)\\\\dashboard\\\\page.tsx -> @/components/query/SqlPreviewPanel\":{\"id\":\"app\\\\(dashboard)\\\\dashboard\\\\page.tsx -> @/components/query/SqlPreviewPanel\",\"files\":[\"static/chunks/_app-pages-browser_components_query_SqlPreviewPanel_tsx.js\"]}}"
